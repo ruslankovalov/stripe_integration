@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass="App\Repository\InvoiceRepository")
  */
-class Invoice
+class Invoice implements \JsonSerializable
 {
     /**
      * @ORM\Id()
@@ -32,9 +32,9 @@ class Invoice
     private $currency;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, options={"default":"new"})
      */
-    private $status;
+    private $status = 'new';
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="invoices")
@@ -104,5 +104,11 @@ class Invoice
         $this->user = $user;
 
         return $this;
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+        ];
     }
 }
