@@ -33,6 +33,11 @@ class User
      */
     private $invoices;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $stripeCustomerId;
+
     public function __construct()
     {
         $this->invoices = new ArrayCollection();
@@ -96,5 +101,17 @@ class User
         }
 
         return $this;
+    }
+
+    public function setStripeCustomerId(string $stripeCustomerId): self
+    {
+        $this->stripeCustomerId = $stripeCustomerId;
+
+        return $this;
+    }
+
+    public function getStripeCustomerId(): ?string
+    {
+        return $this->stripeCustomerId;
     }
 }
