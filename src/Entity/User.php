@@ -5,11 +5,13 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Uuid;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  */
-class User implements \JsonSerializable
+class User implements UserInterface
 {
     /**
      * @ORM\Id()
@@ -19,7 +21,7 @@ class User implements \JsonSerializable
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, unique=true)
      */
     private $email;
 
@@ -29,18 +31,24 @@ class User implements \JsonSerializable
     private $password;
 
     /**
+     * @ORM\Column(type="uuid", length=255, unique=true)
+     */
+    private $apiKey;
+
+    /**
      * @ORM\OneToMany(targetEntity="App\Entity\Invoice", mappedBy="user")
      */
     private $invoices;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", length=255, nullable=true, unique=true)
      */
     private $stripeCustomerId;
 
     public function __construct()
     {
         $this->invoices = new ArrayCollection();
+        $this->apiKey = Uuid::uuid4();
     }
 
     public function getId(): ?int
@@ -115,9 +123,34 @@ class User implements \JsonSerializable
         return $this->stripeCustomerId;
     }
 
-    public function jsonSerialize()
+    public function setApiKey($apiKey): self
     {
-        return [
-        ];
+        $this->apiKey = $apiKey;
+
+        return $this;
+    }
+
+    public function getApiKey(): ?string
+    {
+        return $this->apiKey;
+    }
+
+    public function getRoles()
+    {
+        return ['ROLE_USER'];
+    }
+
+    public function getSalt()
+    {
+        return null;
+    }
+
+    public function getUsername()
+    {
+        return $this->email;
+    }
+
+    public function eraseCredentials()
+    {
     }
 }

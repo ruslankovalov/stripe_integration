@@ -4,6 +4,7 @@ namespace App\Security;
 
 use App\Entity\User;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,14 +34,22 @@ class ApiKeyAuthenticator extends AbstractGuardAuthenticator
 
     public function getCredentials(Request $request)
     {
-        return $request->headers->get('x-api-key');
+        try {
+            $apiKey = Uuid::fromString($request->headers->get('x-api-key'));
+        } catch (InvalidUuidStringException $e) {
+            throw new AuthenticationException();
+        }
+
+        return $apiKey;
     }
 
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        $apiKey = Uuid::fromString($credentials);
+        if (!$credentials && !$credentials instanceof Uuid) {
+            return null;
+        }
 
-        return $this->doctrine->getRepository(User::class)->findBy(['apiKey' => $apiKey]);
+        return $this->doctrine->getRepository(User::class)->findOneBy(['apiKey' => $credentials]);
     }
 
     public function checkCredentials($credentials, UserInterface $user)
