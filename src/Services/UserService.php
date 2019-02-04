@@ -34,9 +34,10 @@ class UserService
     {
         if (!$user->getStripeCustomerId()) {
             $this->stripeService->createStripeCustomer($user);
+            $this->doctrine->getManager()->flush();
         }
 
-        $this->stripeService->addCardToCustomer($user, $card);
+        $this->stripeService->addCardToCustomer($card, $user);
 
         $this->doctrine->getManager()->flush();
 
