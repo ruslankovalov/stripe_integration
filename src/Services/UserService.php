@@ -39,8 +39,6 @@ class UserService
 
         $this->stripeService->addCardToCustomer($card, $user);
 
-        $this->doctrine->getManager()->flush();
-
         return $user;
     }
 }

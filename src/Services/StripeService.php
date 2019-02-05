@@ -48,7 +48,18 @@ class StripeService
             ['api_key' => $this->stripeSecretKey]
         );
 
-        $customer->sources->create(['source' => $token->id]);
+        $card = $customer->sources->create(['source' => $token->id]);
+        $customer->default_source = $card->id;
+
+        $customer->save();
+
+        if ($customer->sources->total_count > 1) {
+            foreach ($customer->sources->data as $card) {
+                if ($card->id != $customer->default_source) {
+                    $card->delete();
+                }
+            }
+        }
 
         return $user;
     }
