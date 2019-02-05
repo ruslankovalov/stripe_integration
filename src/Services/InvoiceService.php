@@ -31,5 +31,10 @@ class InvoiceService
 
     public function payInvoice(Invoice $invoice)
     {
+        $this->stripeService->createChargeForInvoice($invoice);
+
+        $this->doctrine->getManager()->flush();
+
+        return $invoice;
     }
 }

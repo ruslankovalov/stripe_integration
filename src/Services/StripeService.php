@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Entity\User;
 use App\Model\Card;
+use Stripe\Charge;
 use Stripe\Customer;
+use App\Entity\Invoice;
 use Stripe\Token;
 
 class StripeService
@@ -22,7 +24,10 @@ class StripeService
     public function createStripeCustomer(User $user)
     {
         $customer = Customer::create(
-            ['description' => "Customer for {$user->getEmail()}"],
+            [
+                'description' => "Customer for {$user->getEmail()}",
+                'email' => $user->getEmail(),
+            ],
             ['api_key' => $this->stripeSecretKey]
         );
 
@@ -48,19 +53,36 @@ class StripeService
             ['api_key' => $this->stripeSecretKey]
         );
 
-        $card = $customer->sources->create(['source' => $token->id]);
-        $customer->default_source = $card->id;
+        $stripeCard = $customer->sources->create(['source' => $token->id]);
+        $customer->default_source = $stripeCard->id;
 
         $customer->save();
 
         if ($customer->sources->total_count > 1) {
-            foreach ($customer->sources->data as $card) {
-                if ($card->id != $customer->default_source) {
-                    $card->delete();
+            foreach ($customer->sources->data as $stripeCard) {
+                if ($stripeCard->id != $customer->default_source) {
+                    $stripeCard->delete();
                 }
             }
         }
 
         return $user;
+    }
+
+    public function createChargeForInvoice(Invoice $invoice)
+    {
+        $charge = Charge::create(
+            [
+                'amount' => $invoice->getPrice(),
+                'currency' => $invoice->getCurrency(),
+                'customer' => $invoice->getUser()->getStripeCustomerId(),
+                'description' => 'Charge for the invoice. ID: '.$invoice->getId(),
+            ],
+            ['api_key' => $this->stripeSecretKey]
+        );
+
+        $invoice->setStripeChargeId($charge->id);
+
+        return $invoice;
     }
 }
