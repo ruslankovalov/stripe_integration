@@ -3,11 +3,12 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\InvoiceRepository")
  */
-class Invoice
+class Invoice implements \JsonSerializable
 {
     /**
      * @ORM\Id()
@@ -18,23 +19,34 @@ class Invoice
 
     /**
      * @ORM\Column(type="string", length=3000)
+     * @Assert\NotBlank()
+     * @Assert\Length(min=3, max=3000)
      */
     private $description;
 
     /**
      * @ORM\Column(type="integer")
+     * @Assert\NotBlank()
+     * @Assert\Type(type="integer")
      */
     private $price;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank()
+     * @Assert\Currency()
      */
     private $currency;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @var @ORM\Column(type="string", length=255, nullable=true)
      */
-    private $status;
+    private $stripeChargeId;
+
+    /**
+     * @ORM\Column(type="string", length=255, options={"default":"new"})
+     */
+    private $status = 'new';
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="invoices")
@@ -82,6 +94,18 @@ class Invoice
         return $this;
     }
 
+    public function setStripeChargeId(string $stripeChargeId): self
+    {
+        $this->stripeChargeId = $stripeChargeId;
+
+        return $this;
+    }
+
+    public function getStripeChargeId(): ?string
+    {
+        return $this->stripeChargeId;
+    }
+
     public function getStatus(): ?string
     {
         return $this->status;
@@ -104,5 +128,16 @@ class Invoice
         $this->user = $user;
 
         return $this;
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'id' => $this->getId(),
+            'description' => $this->getDescription(),
+            'price' => $this->getPrice(),
+            'currency' => $this->getCurrency(),
+            'stripeChargeId' => $this->getStripeChargeId(),
+        ];
     }
 }
